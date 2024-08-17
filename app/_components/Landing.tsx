@@ -42,7 +42,7 @@ export const Landing = () => {
             <header className="py-6 px-4 sm:px-6 lg:px-8">
                 <nav className="flex justify-between items-center max-w-7xl mx-auto">
                     <div className="flex items-center">
-                        <Image src="/logo.png" alt="Logo" width={40} height={40} className="mr-2" />
+                        <Image src="/image.png" alt="Logo" width={100} height={100} />
                         <span className="text-xl font-bold text-gray-800">CryptoWallet</span>
                     </div>
                     {status === "authenticated" && (

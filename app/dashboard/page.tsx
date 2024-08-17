@@ -1,15 +1,18 @@
-"use client"
+"use client";
 import React, { useState, useEffect } from "react";
 import { useSession } from "next-auth/react";
 import { useRecoilState } from "recoil";
 import { selectedAccountState } from "@/store/state";
 import { SelectAccount } from "../_components/SelectAccount";
 import { getAccounts } from "../actions/Accounts";
+import { getETHBalance, getSOLBalance } from "../actions/Balance";
 
 export default function Page() {
     const { data: session } = useSession();
     const [selectedAccount, setSelectedAccount] = useRecoilState(selectedAccountState);
     const [accounts, setAccounts] = useState<any[]>([]);
+    const [ethBalance, setEthBalance] = useState<string>("0.00");
+    const [solBalance, setSolBalance] = useState<string>("0.00");
 
     useEffect(() => {
         const fetchAccounts = async () => {
@@ -20,6 +23,23 @@ export default function Page() {
         };
         fetchAccounts();
     }, [session]);
+
+    useEffect(() => {
+        const fetchBalances = async () => {
+            if (selectedAccount) {
+                if (selectedAccount.ethWallet?.publicKey) {
+                    const ethBal = await getETHBalance(selectedAccount.ethWallet.publicKey);
+                    setEthBalance(ethBal);
+                }
+
+                if (selectedAccount.solWallet?.publicKey) {
+                    const solBal = await getSOLBalance(selectedAccount.solWallet.publicKey);
+                    setSolBalance(solBal.toFixed(2)); // Format to 2 decimal places
+                }
+            }
+        };
+        fetchBalances();
+    }, [selectedAccount]);
 
     return (
         <div className="flex h-screen bg-gray-100">
@@ -46,7 +66,7 @@ export default function Page() {
                                     {selectedAccount?.ethWallet?.publicKey}
                                 </p>
                                 <p className="text-sm font-medium text-gray-800">
-                                    Balance: <span className="text-green-600">0.00 ETH</span>
+                                    Balance: <span className="text-green-600">{ethBalance} ETH</span>
                                 </p>
                             </div>
 
@@ -57,7 +77,7 @@ export default function Page() {
                                     {selectedAccount?.solWallet?.publicKey}
                                 </p>
                                 <p className="text-sm font-medium text-gray-800">
-                                    Balance: <span className="text-green-600">0.00 SOL</span>
+                                    Balance: <span className="text-green-600">{solBalance} SOL</span>
                                 </p>
                             </div>
                         </div>
