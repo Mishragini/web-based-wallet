@@ -1,14 +1,16 @@
-"use client";
+'use client';
+import React, { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { CustomSession } from "@/utils/auth";
 import { getMnemonic, saveWallets } from "@/utils/indexedDB";
 import { signIn, useSession, signOut } from "next-auth/react";
 import { useRouter } from "next/navigation";
-import { useState, useEffect } from "react";
-import { MnemonicComp } from "./Mnemonic";
 import Image from 'next/image';
+import { MnemonicComp } from "./Mnemonic";
+import { Loading } from "./Loading";  // Import the Loading component
 
 export const Landing = () => {
+    const [loading, setLoading] = useState(true);  // Default to true to show loading initially
     const [mnemonic, setMnemonic] = useState<string | null>(null);
     const { status, data: session } = useSession();
     const router = useRouter();
@@ -21,21 +23,32 @@ export const Landing = () => {
                 saveWallets(customSession.user.uid, customSession.mnemonic, customSession.wallets)
                     .then(() => {
                         setMnemonic(customSession.mnemonic!);
+                        setLoading(false);  // Stop loading after saving wallets
                     })
                     .catch(error => {
                         console.error("Failed to save wallets:", error);
+                        setLoading(false);  // Stop loading on error
                     });
             } else {
                 getMnemonic(customSession.user.uid)
                     .then(fetchedMnemonic => {
                         setMnemonic(fetchedMnemonic);
+                        setLoading(false);  // Stop loading after fetching mnemonic
                     })
                     .catch(error => {
                         console.error("Failed to fetch mnemonic:", error);
+                        setLoading(false);  // Stop loading on error
                     });
             }
+        } else {
+            setLoading(false);  // Stop loading if not authenticated
         }
     }, [status, session]);
+
+    // Show loading spinner while data is being fetched
+    if (loading) {
+        return <Loading />;
+    }
 
     return (
         <div className="flex flex-col min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100">
@@ -65,16 +78,18 @@ export const Landing = () => {
                     <p className="mt-5 text-xl text-gray-500">
                         Manage your cryptocurrencies with ease and security.
                     </p>
-                    {status === "authenticated" ? (
+                    {loading ? (
+                        <p className="text-gray-600 mt-8">Loading...</p> // Show loading state
+                    ) : status === "authenticated" ? (
                         <Button
-                            onClick={() => router.push('/dashboard')}
+                            onClick={() => router.push("/dashboard")}
                             className="mt-8 w-full flex items-center justify-center px-8 py-3 border border-transparent text-base font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700 md:py-4 md:text-lg md:px-10"
                         >
                             Go to Dashboard
                         </Button>
                     ) : (
                         <Button
-                            onClick={() => signIn('google')}
+                            onClick={() => signIn("google")}
                             className="mt-8 w-full flex items-center justify-center px-8 py-3 border border-transparent text-base font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700 md:py-4 md:text-lg md:px-10"
                         >
                             Sign In with Google
