@@ -1,9 +1,12 @@
+"use client";
+
 import React, { useEffect } from "react";
 import { useSession } from "next-auth/react";
 import { useRecoilState } from "recoil";
 import { selectedAccountState } from "@/store/state";
 import { createNewAccount, getAccounts } from "../actions/Accounts";
 import { getMnemonic, saveWallets } from "@/utils/indexedDB";
+import { LoadingSkeleton } from "../_components/LoadingSkeleton";
 
 export const SelectAccount: React.FC = () => {
     const { data: session } = useSession();
@@ -11,14 +14,21 @@ export const SelectAccount: React.FC = () => {
     const [selectedAccount, setSelectedAccount] = useRecoilState(selectedAccountState);
     const [accounts, setAccounts] = React.useState<any[]>([]);
     const [isCreating, setIsCreating] = React.useState(false);
+    const [loadingAccounts, setLoadingAccounts] = React.useState(true);
 
     useEffect(() => {
         const fetchAccounts = async () => {
             if (email) {
-                const fetchedAccounts = await getAccounts(email);
-                setAccounts(fetchedAccounts);
-                if (fetchedAccounts.length > 0 && !selectedAccount) {
-                    setSelectedAccount(fetchedAccounts[0]);
+                try {
+                    const fetchedAccounts = await getAccounts(email);
+                    setAccounts(fetchedAccounts);
+                    if (fetchedAccounts.length > 0 && !selectedAccount) {
+                        setSelectedAccount(fetchedAccounts[0]);
+                    }
+                } catch (error) {
+                    console.error("Error fetching accounts:", error);
+                } finally {
+                    setLoadingAccounts(false);
                 }
             }
         };
@@ -49,24 +59,32 @@ export const SelectAccount: React.FC = () => {
         }
     };
 
+    if (loadingAccounts) {
+        return <LoadingSkeleton />;
+    }
+
     return (
         <div className="flex flex-col h-full">
             <div className="flex-grow overflow-y-auto">
                 <h2 className="text-lg font-semibold mb-4 text-gray-700">Your Accounts</h2>
-                {accounts.map((account) => (
-                    <div
-                        key={account.id}
-                        onClick={() => setSelectedAccount(account)}
-                        className={`p-3 mb-2 rounded-md cursor-pointer transition-colors duration-150 ease-in-out ${selectedAccount?.id === account.id
+                {accounts.length === 0 ? (
+                    <p className="text-gray-500">No accounts found.</p>
+                ) : (
+                    accounts.map((account) => (
+                        <div
+                            key={account.id}
+                            onClick={() => setSelectedAccount(account)}
+                            className={`p-3 mb-2 rounded-md cursor-pointer transition-colors duration-150 ease-in-out ${selectedAccount?.id === account.id
                                 ? 'bg-indigo-100 text-indigo-800'
                                 : 'bg-white hover:bg-gray-100'
-                            }`}
-                    >
-                        <p className="font-medium">{account.name}</p>
-                        <p className="text-xs text-gray-500 truncate">ETH: {account.ethWallet.publicKey}</p>
-                        <p className="text-xs text-gray-500 truncate">SOL: {account.solWallet.publicKey}</p>
-                    </div>
-                ))}
+                                }`}
+                        >
+                            <p className="font-medium">{account.name}</p>
+                            <p className="text-xs text-gray-500 truncate">ETH: {account.ethWallet.publicKey}</p>
+                            <p className="text-xs text-gray-500 truncate">SOL: {account.solWallet.publicKey}</p>
+                        </div>
+                    ))
+                )}
             </div>
             <div className="mt-4">
                 <button
