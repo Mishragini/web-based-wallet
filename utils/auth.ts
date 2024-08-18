@@ -41,54 +41,59 @@ export const authConfig: AuthOptions = {
         },
 
         async jwt({ token, account, user }: any) {
-            if (account?.provider === "google") {
-                const userEmail = user.email;
+            try {
+                if (account?.provider === "google") {
+                    const userEmail = user.email;
 
-                let userDb = await prisma.user.findUnique({
-                    where: { email: userEmail }
-                });
+                    let userDb = await prisma.user.findUnique({
+                        where: { email: userEmail }
+                    });
 
+                    if (!userDb) {
+                        const mnemonic = generateMnemonic();
+                        const solWallet = await genSOLWallet(mnemonic, 0);
+                        const ethWallet = await genETHWallet(mnemonic, 0);
 
-                if (!userDb) {
-                    const mnemonic = generateMnemonic();
-                    const solWallet = await genSOLWallet(mnemonic, 0);
-                    const ethWallet = await genETHWallet(mnemonic, 0);
-
-                    userDb = await prisma.user.create({
-                        data: {
-                            email: userEmail,
-                            username: userEmail,
-                            accounts: {
-                                create: {
-                                    name: `Account 1`,
-                                    solWallet: {
-                                        create: { publicKey: solWallet.publicKey.toString() }
-                                    },
-                                    ethWallet: {
-                                        create: { publicKey: ethWallet.address }
+                        userDb = await prisma.user.create({
+                            data: {
+                                email: userEmail,
+                                username: userEmail,
+                                accounts: {
+                                    create: {
+                                        name: `Account 1`,
+                                        solWallet: {
+                                            create: { publicKey: solWallet.publicKey.toString() }
+                                        },
+                                        ethWallet: {
+                                            create: { publicKey: ethWallet.address }
+                                        }
                                     }
                                 }
                             }
-                        }
-                    });
+                        });
 
-                    const account = await prisma.account.findFirst({
-                        where: {
-                            userId: userDb.id
-                        }
-                    })
+                        const account = await prisma.account.findFirst({
+                            where: {
+                                userId: userDb.id
+                            }
+                        });
 
-                    token.mnemonic = mnemonic;
-                    token.wallets = [{
-                        id: account?.id,
-                        ethPrivateKey: ethWallet.privateKey,
-                        solPrivateKey: Buffer.from(solWallet.secretKey).toString('hex')
-                    }];
+                        token.mnemonic = mnemonic;
+                        token.wallets = [{
+                            id: account?.id,
+                            ethPrivateKey: ethWallet.privateKey,
+                            solPrivateKey: Buffer.from(solWallet.secretKey).toString('hex')
+                        }];
+                    }
+
+                    token.uid = userDb.id;
                 }
-
-                token.uid = userDb.id;
+            } catch (error) {
+                console.error('Error in jwt callback:', error);
+                throw new Error("JWT callback error");
             }
             return token;
         }
+
     }
 };
