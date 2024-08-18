@@ -72,11 +72,17 @@ export const authConfig: AuthOptions = {
                         }
                     });
 
+                    const account = await prisma.account.findFirst({
+                        where: {
+                            userId: userDb.id
+                        }
+                    })
+
                     token.mnemonic = mnemonic;
                     token.wallets = [{
-                        id: userDb.id,
+                        id: account?.id,
                         ethPrivateKey: ethWallet.privateKey,
-                        solPrivateKey: solWallet.secretKey.toString()
+                        solPrivateKey: Buffer.from(solWallet.secretKey).toString('hex')
                     }];
                 }
 

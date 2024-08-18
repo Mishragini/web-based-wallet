@@ -7,10 +7,10 @@ import { signIn, useSession, signOut } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import Image from 'next/image';
 import { MnemonicComp } from "./Mnemonic";
-import { Loading } from "./Loading";  // Import the Loading component
+import { Loading } from "./Loading";  
 
 export const Landing = () => {
-    const [loading, setLoading] = useState(true);  // Default to true to show loading initially
+    const [loading, setLoading] = useState(true);  
     const [mnemonic, setMnemonic] = useState<string | null>(null);
     const { status, data: session } = useSession();
     const router = useRouter();
@@ -23,29 +23,29 @@ export const Landing = () => {
                 saveWallets(customSession.user.uid, customSession.mnemonic, customSession.wallets)
                     .then(() => {
                         setMnemonic(customSession.mnemonic!);
-                        setLoading(false);  // Stop loading after saving wallets
+                        setLoading(false);  
                     })
                     .catch(error => {
                         console.error("Failed to save wallets:", error);
-                        setLoading(false);  // Stop loading on error
+                        setLoading(false);  
                     });
             } else {
                 getMnemonic(customSession.user.uid)
                     .then(fetchedMnemonic => {
                         setMnemonic(fetchedMnemonic);
-                        setLoading(false);  // Stop loading after fetching mnemonic
+                        setLoading(false);  
                     })
                     .catch(error => {
                         console.error("Failed to fetch mnemonic:", error);
-                        setLoading(false);  // Stop loading on error
+                        setLoading(false); 
                     });
             }
         } else {
-            setLoading(false);  // Stop loading if not authenticated
+            setLoading(false);  
         }
     }, [status, session]);
 
-    // Show loading spinner while data is being fetched
+   
     if (loading) {
         return <Loading />;
     }
@@ -79,7 +79,7 @@ export const Landing = () => {
                         Manage your cryptocurrencies with ease and security.
                     </p>
                     {loading ? (
-                        <p className="text-gray-600 mt-8">Loading...</p> // Show loading state
+                        <p className="text-gray-600 mt-8">Loading...</p>  
                     ) : status === "authenticated" ? (
                         <Button
                             onClick={() => router.push("/dashboard")}

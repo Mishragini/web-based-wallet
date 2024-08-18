@@ -1,6 +1,5 @@
-// types/next-auth.d.ts
 import NextAuth from "next-auth";
-import { CustomSession } from "@/utils/auth"; // Adjust the path according to your file structure
+import { CustomSession } from "@/utils/auth";
 
 declare module "next-auth" {
     interface Session {
@@ -8,7 +7,7 @@ declare module "next-auth" {
             email: string;
             name: string;
             image: string;
-            uid: string; // Add uid here
+            uid: string;
         };
         mnemonic?: string;
         wallets?: Array<{

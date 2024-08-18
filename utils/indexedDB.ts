@@ -30,7 +30,7 @@ export const saveWallets = async (userId: string, mnemonic: string, accounts: { 
             ethPrivateKey: encrypt(account.ethPrivateKey),
             solPrivateKey: encrypt(account.solPrivateKey)
         };
-        await db.put(STORE_NAME, { id: `${userId}-${account.id}`, ...encryptedData });
+        await db.put(STORE_NAME, { id: `${userId}_${account.id}`, ...encryptedData });
     }
 };
 
@@ -44,11 +44,11 @@ export const getWallets = async (userId: string) => {
 
     const accountKeys = await db.getAllKeys(STORE_NAME);
     for (const key of accountKeys) {
-        if (typeof key === 'string' && key.startsWith(`${userId}-`)) {
+        if (typeof key === 'string' && key.startsWith(`${userId}_`)) {
             const accountData = await db.get(STORE_NAME, key);
             if (accountData) {
                 accounts.push({
-                    id: key.split('-')[1],
+                    id: key.split('_')[1],
                     ethPrivateKey: decrypt(accountData.ethPrivateKey),
                     solPrivateKey: decrypt(accountData.solPrivateKey)
                 });

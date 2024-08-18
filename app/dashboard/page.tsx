@@ -6,6 +6,8 @@ import { selectedAccountState } from "@/store/state";
 import { SelectAccount } from "../_components/SelectAccount";
 import { getAccounts } from "../actions/Accounts";
 import { getETHBalance, getSOLBalance } from "../actions/Balance";
+import { SendETHDialog } from "../_components/SendETHDialog";
+import { SendSOLDialog } from "../_components/SendSOLDialog";
 
 export default function Page() {
     const { data: session } = useSession();
@@ -34,7 +36,7 @@ export default function Page() {
 
                 if (selectedAccount.solWallet?.publicKey) {
                     const solBal = await getSOLBalance(selectedAccount.solWallet.publicKey);
-                    setSolBalance(solBal.toFixed(2)); // Format to 2 decimal places
+                    setSolBalance(solBal.toFixed(2));
                 }
             }
         };
@@ -65,9 +67,12 @@ export default function Page() {
                                 <p className="text-xs bg-gray-100 p-2 rounded mb-4 break-all">
                                     {selectedAccount?.ethWallet?.publicKey}
                                 </p>
-                                <p className="text-sm font-medium text-gray-800">
-                                    Balance: <span className="text-green-600">{ethBalance} ETH</span>
-                                </p>
+                                <div className="flex items-center justify-between">
+                                    <p className="text-sm font-medium text-gray-800">
+                                        Balance: <span className="text-green-600">{ethBalance} ETH</span>
+                                    </p>
+                                    <SendETHDialog />
+                                </div>
                             </div>
 
                             <div className="bg-white rounded-lg shadow-md p-6">
@@ -76,9 +81,12 @@ export default function Page() {
                                 <p className="text-xs bg-gray-100 p-2 rounded mb-4 break-all">
                                     {selectedAccount?.solWallet?.publicKey}
                                 </p>
-                                <p className="text-sm font-medium text-gray-800">
-                                    Balance: <span className="text-green-600">{solBalance} SOL</span>
-                                </p>
+                                <div className="flex items-center justify-between">
+                                    <p className="text-sm font-medium text-gray-800">
+                                        Balance: <span className="text-green-600">{solBalance} SOL</span>
+                                    </p>
+                                    <SendSOLDialog />
+                                </div>
                             </div>
                         </div>
                     </div>

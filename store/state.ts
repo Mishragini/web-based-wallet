@@ -1,4 +1,4 @@
-// state.ts
+
 import { Account } from "@/types";
 import { atom } from "recoil";
 

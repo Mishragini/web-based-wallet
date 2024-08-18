@@ -1,10 +1,11 @@
 import { Connection, PublicKey } from "@solana/web3.js";
 import { ethers } from "ethers";
 
-const solanaNetwork = "https://solana-mainnet.g.alchemy.com/v2/3ZSds_AnK6e0uozHfCDJbwDSRHOtAkrm";
-const ethereumNetwork = "https://eth-mainnet.g.alchemy.com/v2/3ZSds_AnK6e0uozHfCDJbwDSRHOtAkrm";
 
-const solanaConnection = new Connection(solanaNetwork);
+const solanaURL = process.env.NEXT_PUBLIC_SOLANA_URL!;
+const ethereumURL = process.env.NEXT_PUBLIC_ETHEREUM_URL!;
+
+const solanaConnection = new Connection(solanaURL);
 
 export async function getSOLBalance(publicKey: string) {
     try {
@@ -17,7 +18,7 @@ export async function getSOLBalance(publicKey: string) {
     }
 }
 
-const ethProvider = new ethers.JsonRpcProvider(ethereumNetwork);
+const ethProvider = new ethers.JsonRpcProvider(ethereumURL);
 
 export async function getETHBalance(address: string) {
     try {
