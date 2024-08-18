@@ -27,50 +27,66 @@ export function SendSOLDialog() {
         setIsLoading(true);
         setError('');
 
-        try {
-            const wallets = await getWallets(session.user.uid);
-            if (!wallets) {
-                throw new Error('No wallets found');
+        const MAX_RETRIES = 3;
+        const BASE_DELAY = 1000;
+
+        for (let attempt = 0; attempt < MAX_RETRIES; attempt++) {
+            try {
+                const wallets = await getWallets(session.user.uid);
+                if (!wallets) {
+                    throw new Error('No wallets found');
+                }
+
+                const account = wallets.accounts.find(acc => acc.id === selectedAccount.id.toString());
+
+                if (!account) {
+                    throw new Error('Selected account not found');
+                }
+
+                const privateKey = account.solPrivateKey;
+
+                const keypair = Keypair.fromSecretKey(Buffer.from(privateKey, 'hex'));
+
+                const connection = new Connection(process.env.NEXT_PUBLIC_SOLANA_URL!);
+
+                const transaction = new Transaction().add(
+                    SystemProgram.transfer({
+                        fromPubkey: keypair.publicKey,
+                        toPubkey: new PublicKey(recipient),
+                        lamports: parseFloat(amount) * LAMPORTS_PER_SOL
+                    })
+                );
+
+                const signature = await sendAndConfirmTransaction(
+                    connection,
+                    transaction,
+                    [keypair],
+                    { commitment: 'confirmed' }
+                );
+
+                console.log(`Transaction confirmed. Signature: ${signature}`);
+                setAmount('');
+                setRecipient('');
+                setIsDialogOpen(false);
+                setIsLoading(false);
+                return;
+
+            } catch (error: any) {
+                console.error('Error sending transaction:', error);
+                if (error.message.includes('429') || error.message.includes('rate-limited')) {
+                    const delay = BASE_DELAY * Math.pow(2, attempt);
+                    console.log(`Rate limited. Retrying in ${delay}ms...`);
+                    await new Promise(resolve => setTimeout(resolve, delay));
+                } else {
+                    setError(error.message || 'An error occurred while sending the transaction');
+                    setIsLoading(false);
+                    return;
+                }
             }
-
-            const account = wallets.accounts.find(acc => acc.id === selectedAccount.id.toString());
-
-            if (!account) {
-                throw new Error('Selected account not found');
-            }
-
-            const privateKey = account.solPrivateKey;
-
-            const keypair = Keypair.fromSecretKey(Buffer.from(privateKey, 'hex'));
-
-            const connection = new Connection(process.env.NEXT_PUBLIC_SOLANA_URL!);
-
-            const transaction = new Transaction().add(
-                SystemProgram.transfer({
-                    fromPubkey: keypair.publicKey,
-                    toPubkey: new PublicKey(recipient),
-                    lamports: parseFloat(amount) * LAMPORTS_PER_SOL
-                })
-            );
-
-            const signature = await sendAndConfirmTransaction(
-                connection,
-                transaction,
-                [keypair],
-                { commitment: 'confirmed' }
-            );
-
-            console.log(`Transaction confirmed. Signature: ${signature}`);
-            setAmount('');
-            setRecipient('');
-            setIsDialogOpen(false);
-
-        } catch (error: any) {
-            console.error('Error sending transaction:', error);
-            setError(error.message || 'An error occurred while sending the transaction');
-        } finally {
-            setIsLoading(false);
         }
+
+        setError('Failed to send transaction after multiple attempts. The network may be congested.');
+        setIsLoading(false);
     };
 
     return (
