@@ -18,7 +18,8 @@ export default function Page() {
     const [ethBalance, setEthBalance] = useState<string>("0.00");
     const [solBalance, setSolBalance] = useState<string>("0.00");
     const [isMobileSidebarOpen, setIsMobileSidebarOpen] = useState(false);
-    const [loading, setLoading] = useState(false);
+    const [loadingAccounts, setLoadingAccounts] = useState(true);
+    const [loadingBalances, setLoadingBalances] = useState(false);
 
     useEffect(() => {
         const fetchAccounts = async () => {
@@ -31,16 +32,18 @@ export default function Page() {
                     }
                 } catch (error) {
                     console.error("Error fetching accounts:", error);
+                } finally {
+                    setLoadingAccounts(false); // Stop loading accounts once fetched
                 }
             }
         };
         fetchAccounts();
-    }, [session, setSelectedAccount, selectedAccount]);
+    }, [session, selectedAccount, setSelectedAccount]);
 
     useEffect(() => {
         const fetchBalances = async () => {
             if (selectedAccount) {
-                setLoading(true);
+                setLoadingBalances(true);
                 try {
                     if (selectedAccount.ethWallet?.publicKey) {
                         const ethBal = await getETHBalance(selectedAccount.ethWallet.publicKey);
@@ -54,16 +57,18 @@ export default function Page() {
                 } catch (error) {
                     console.error("Error fetching balances:", error);
                 } finally {
-                    setLoading(false);
+                    setLoadingBalances(false);
                 }
             } else {
-                setLoading(false);
+                setLoadingBalances(false);
             }
         };
         fetchBalances();
     }, [selectedAccount]);
 
-    if (loading) {
+    const isLoading = loadingAccounts || loadingBalances;
+
+    if (isLoading) {
         return <Loading />;
     }
 
